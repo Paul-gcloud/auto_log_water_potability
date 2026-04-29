@@ -50,7 +50,7 @@ with mlflow.start_run():
     y_test = processed_test_data['Potability']
 
     train_df = mlflow.data.from_pandas(processed_train_data)
-    test_df = mlflow.data.from_data(processed_test_data)
+    test_df = mlflow.data.from_pandas(processed_test_data)
 
     #load model
     model = pickle.load(open('model.pkl', 'rb'))
