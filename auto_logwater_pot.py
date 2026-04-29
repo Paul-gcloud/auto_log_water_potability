@@ -9,10 +9,11 @@ import seaborn as sns
 from sklearn.ensemble import GradientBoostingClassifier
 import mlflow.sklearn 
 from sklearn.metrics import precision_score, accuracy_score, recall_score,f1_score, confusion_matrix
+import dagshub
 
-mlflow.set_tracking_uri("http://127.0.0.1:5000")
-mlflow.set_experiment("water_exp2")
-
+dagshub.init(repo_owner='faithvineco', repo_name='auto_log_water_potability', mlflow=True)
+mlflow.set_experiment("auto_log_waterpot")
+mlflow.set_tracking_uri("https://dagshub.com/faithvineco/auto_log_water_potability.mlflow")
 
 data = pd.read_csv(r"C:\Users\USER\exp_mlflow\data\water_potability.csv")
 
@@ -35,6 +36,7 @@ X_train = processed_train_data.drop(columns=['Potability'])
 y_train = processed_train_data['Potability']
 
 n_estimators = 500
+max=50
 
 with mlflow.start_run():
     #load_model
@@ -43,12 +45,12 @@ with mlflow.start_run():
 
     pickle.dump(clf,open('model.pkl', 'wb'))
 
-    #load data
-    #test_data = pd.read_csv('./data/processed/test_processed.csv')
-
     #prepare data
     X_test = processed_test_data.drop(columns=['Potability'])
     y_test = processed_test_data['Potability']
+
+    train_df = mlflow.data.from_pandas(processed_train_data)
+    test_df = mlflow.data.from_data(processed_test_data)
 
     #load model
     model = pickle.load(open('model.pkl', 'rb'))
@@ -69,6 +71,7 @@ with mlflow.start_run():
     mlflow.log_metric('flscore',f1score)
 
     mlflow.log_param('n_estimators', n_estimators)
+    mlflow.log_param('max', max)
 
     cm = confusion_matrix(y_test,y_pred)
     plt.figure(figsize=(5,5))
@@ -82,6 +85,9 @@ with mlflow.start_run():
     mlflow.sklearn.log_model(sk_model=clf, name="GradientBoostingClassifier")
 
     mlflow.log_artifact(__file__)
+
+    mlflow.log_input(train_df, "train")
+    mlflow.log_input(test_df,"test")
 
     mlflow.set_tag("Data Scientst","Paul Mubiru")
     mlflow.set_tag("Model","GB")
